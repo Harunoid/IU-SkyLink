@@ -2,13 +2,15 @@
 
 An interactive presentation of **IU SkyLink**, a concept for a rooftop-to-rooftop aerial cable transit network at Indiana University Bloomington. Stations sit on existing campus buildings, so the system adds cross-campus capacity without taking new land.
 
-The site has three parts:
+The site has five parts:
 
 - **System map** – both lines, all seven stations, and simulated cabin positions on a tilted 3D map of campus.
-- **Trip comparison** – door-to-door time by SkyLink against walking for any station pair, checked against IU's 15-minute passing period.
+- **Trip comparison** – door-to-door time by SkyLink, on foot and by campus bus for any station pair, checked against IU's 15-minute passing period.
+- **Layout sandbox** – unlock the network, drag any station, and watch the cables, span lengths and trip times follow.
+- **Station surveys** – a panel per station with site photos, roof elevations and clearance notes.
 - **Cabin viewer** – an orbitable 3D model of the 10-passenger cabin with annotated specifications.
 
-The map also outlines each host building from OpenStreetMap, the trip panel draws an elevation profile with a regenerative-braking estimate, and the header shows a live wind-based operating status.
+The map also outlines each host building from OpenStreetMap and can show a 15 m clearance corridor around every cable, the trip panel draws an elevation profile with a regenerative-braking estimate, and the header shows a live wind-based operating status.
 
 Built for Design Practice (W200) at IU Bloomington, Fall 2026.
 
@@ -35,8 +37,16 @@ flowchart LR
     map[map.js<br>MapLibre 3D map]
     basemap[basemap.js<br>map style]
     planner[planner.js<br>trip comparison UI]
+    survey[survey.js<br>station survey dialog]
     viewer[viewer.js<br>3D cabin dialog]
+    geo[geo.js<br>Turf.js wrappers]
   end
+  matrix[(transit-matrix.json)] --> network
+  surveys[(stations.json)] --> survey
+  app --> survey
+  network --> geo
+  map --> geo
+  geo -. Turf.js 7 .-> cdn1
   app --> network
   app --> map
   app --> planner
@@ -57,9 +67,13 @@ flowchart LR
 
 ```
 .
-├── index.html                  Page markup: header, map, panels, viewer dialog
+├── index.html                  Page markup: header, map, panels, dialogs
 ├── public/
-│   ├── data/skylink-data.geojson   Stations and alignments
+│   ├── data/
+│   │   ├── skylink-data.geojson    Stations and alignments
+│   │   ├── stations.json           Survey photos and clearance notes
+│   │   └── transit-matrix.json     Campus bus estimates (generated)
+│   ├── images/stations/            Survey photos
 │   └── models/skylink-cabin.glb    Cabin model (generated)
 ├── src/
 │   ├── css/
@@ -67,21 +81,24 @@ flowchart LR
 │   │   └── main.css            Component styles
 │   └── js/
 │       ├── app.js              Loads data, connects the modules
-│       ├── network.js          Parsing, distances, fastest-route search
-│       ├── map.js              3D map, lines, stations, cabin simulation
+│       ├── network.js          Network model, timing, fastest-route search
+│       ├── geo.js              Distances, lengths and buffers (Turf.js)
+│       ├── map.js              3D map, lines, stations, sandbox, cabins
 │       ├── basemap.js          Dark map style with extruded buildings
-│       ├── planner.js          Walking vs. SkyLink comparison
+│       ├── planner.js          SkyLink, walking and bus comparison
 │       ├── profile.js          Elevation profile and energy estimate
 │       ├── buildings.js        Host building footprints (snapshot or live)
 │       ├── osm.js              Overpass query and geometry parsing
 │       ├── weather.js          Live wind operating status
+│       ├── survey.js           Station survey photos and section card
 │       └── viewer.js           model-viewer setup, camera presets, hotspots
 └── tools/
     ├── build-cabin-model.mjs   Regenerates the cabin .glb
+    ├── build-transit-matrix.mjs  Regenerates the campus bus matrix
     └── fetch-campus-data.mjs   Refreshes footprints and elevations
 ```
 
-`map.js`, `planner.js` and `viewer.js` do not import one another. `app.js` passes callbacks between them (for example, a planned trip is handed to the map to highlight), which keeps each module usable on its own.
+`map.js`, `planner.js`, `survey.js` and `viewer.js` do not import one another. `app.js` passes callbacks between them (for example, a planned trip is handed to the map to highlight), which keeps each module usable on its own.
 
 ## Data schema
 
@@ -115,7 +132,7 @@ flowchart LR
 | `line_speed_mps` | number | 6.0 |
 | `peak_headway_s` | number | 30 |
 
-Alignment vertices coincide with station positions. Spans are straight because a monocable can only change direction inside a station.
+Spans are straight because a monocable can only change direction inside a station, so the site draws each line from its ordered `stations` list and the stations' positions. The `LineString` coordinates are kept in step for other GIS tools.
 
 ### Coordinate provenance
 
@@ -139,16 +156,67 @@ The wind status uses planning-level gust limits (reduced speed from 15 m/s, hold
 
 All assumptions live in `OPERATIONS` at the top of `src/js/network.js`.
 
+Every figure is door to door, and distances are geodesic, measured with [Turf.js](https://turfjs.org/).
+
+**SkyLink**
+
 | Component | Value |
 | --- | --- |
-| Rooftop access (elevator and fare tap), each end | 60 s |
+| Fare tap, elevator call and doors, each end | 45 s |
+| Elevator ride, each end | platform height ÷ 2 m/s |
 | Average wait at peak | 15 s (half the headway) |
-| Ride | span distance ÷ 6.0 m/s |
+| Cruise | span distance ÷ 6.0 m/s |
 | Passing through an intermediate station | 40 s |
 | Changing lines | 75 s |
-| Walking | straight-line distance × 1.3, at 1.34 m/s |
+
+**Walking**
+
+| Component | Value |
+| --- | --- |
+| Distance | straight line × 1.3 for real paths |
+| Pace | 1.3 m/s |
+| Climbing | 6 s for each metre of ground gained |
+
+**Campus bus**
+
+`public/data/transit-matrix.json` holds a precalculated time for all 42 station pairs, written by `npm run build:transit`. It is a **modelled estimate, not a timetable**: it assumes one service comparable to IU Campus Bus Route A, with the parameters stored in the file's `service` block.
+
+| Component | Value |
+| --- | --- |
+| Average wait | 5 min (half a 10-minute headway) |
+| Walk to and from stops | 2 min each end |
+| Street distance | straight line × 1.4 |
+| Running speed between stops | 7 m/s |
+| Stops | 25 s every 400 m |
+| Traffic delay | 20% of driving time |
+
+Replacing this file with times derived from the Bloomington Transit GTFS feed is the intended next step; the page only needs the `pairs` to keep the same shape.
 
 The route search is Dijkstra's algorithm over (station, line) pairs, so staying aboard through a station and transferring there are costed differently. These are planning-level estimates, not a simulation; short hops such as Wells Library to Hamilton Lugar correctly come out faster on foot.
+
+## Layout sandbox and clearance corridor
+
+**Edit network layout** makes every station pin draggable. While a pin moves, `network.js` re-derives each line's geometry and span lengths from the station positions, the map redraws the cables, and the open trip is re-planned, so the comparison updates as you drag. **Reset to default layout** puts every station back on its surveyed position. Nothing is saved; reloading the page also restores the default.
+
+Only horizontal distance follows a moved station. Ground elevations, platform heights and the bus matrix stay as surveyed, and the page says so while a layout is modified.
+
+**Show FAA / canopy clearance corridor** draws a 15 m buffer either side of each visible cable (`turf.buffer`). It is a planning aid for spotting conflicts with trees and roofs, not a regulatory surface.
+
+## Station surveys
+
+Each station popup opens a survey panel. Photos and notes come from `public/data/stations.json`:
+
+```json
+"stadium": {
+  "station_type": "End terminal with drive machinery and cabin storage",
+  "photos": [
+    { "url": "images/stations/stadium-1.jpg", "caption": "North Terminal site inspection", "credit": "Harun" }
+  ],
+  "clearance_notes": ["..."]
+}
+```
+
+`url` is relative to `public/`. A station with an empty `photos` list shows a schematic section drawn from its ground level and platform height instead. Clearance notes are design intent, not survey findings.
 
 ## The cabin model
 
@@ -180,6 +248,12 @@ To refresh footprints and elevations from open data (Node 18 or newer, needs int
 npm run fetch:data
 ```
 
+To regenerate the bus matrix after moving a station in the data or changing the bus assumptions:
+
+```bash
+npm run build:transit
+```
+
 To regenerate the cabin model after editing the parts list (Node 18 or newer):
 
 ```bash
@@ -198,5 +272,5 @@ The repository root is the site. On GitHub: **Settings → Pages → Build and d
 
 - Building footprints © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL); elevation from the U.S. Geological Survey; weather data by [Open-Meteo](https://open-meteo.com/) (CC BY 4.0)
 - Basemap tiles by [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org/), data from [OpenStreetMap](https://www.openstreetmap.org/copyright)
-- [MapLibre GL JS](https://maplibre.org/) and [`<model-viewer>`](https://modelviewer.dev/)
-- IU Crimson `#990000` and Cream `#EEEDEB` follow Indiana University's brand palette. This is a student project and is not affiliated with or endorsed by the university.
+- [MapLibre GL JS](https://maplibre.org/), [Turf.js](https://turfjs.org/) and [`<model-viewer>`](https://modelviewer.dev/)
+- IU Crimson `#990000` (with `#7A1705` as its dark shade) and Cream `#EEEDEB` follow Indiana University's brand palette. This is a student project and is not affiliated with or endorsed by the university.

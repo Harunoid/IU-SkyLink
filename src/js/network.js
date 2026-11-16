@@ -2,22 +2,32 @@
  * Network model: parses the SkyLink GeoJSON into stations and lines and
  * answers trip questions. No DOM or map-library code lives here so the timing
  * model can be reasoned about (and tested) on its own.
+ *
+ * Station positions are mutable: the sandbox moves them, and line geometry,
+ * span lengths and trip times all follow from wherever the stations are.
  */
+import { distanceMeters, pathLengthMeters } from './geo.js';
 
 /** Operating assumptions behind every time estimate shown in the UI. */
 export const OPERATIONS = Object.freeze({
   lineSpeedMps: 6.0,
   peakHeadwaySeconds: 30,
   cabinCapacity: 10,
-  /** Rooftop access at each end of the trip: elevator ride plus fare tap. */
-  stationAccessSeconds: 60,
+  /** Fare tap, elevator call and doors at each end of the trip. */
+  stationEntrySeconds: 45,
+  /** Elevator travel between street and rooftop platform. */
+  elevatorSpeedMps: 2.0,
+  /** Used for the elevator ride where a platform height is not surveyed. */
+  defaultPlatformHeightM: 25,
   /** Cabins detach and creep through intermediate stations. */
   throughStationSeconds: 40,
   /** Platform-to-platform walk and re-boarding when changing lines. */
   transferSeconds: 75,
-  walkSpeedMps: 1.34,
+  walkSpeedMps: 1.3,
   /** Campus paths are not straight lines; scales crow-fly distance. */
   walkDetourFactor: 1.3,
+  /** Naismith-style penalty for each metre of ground climbed on foot. */
+  walkAscentSecondsPerMeter: 6,
   passingPeriodSeconds: 15 * 60,
   /** Average rider with bag, for potential-energy estimates. */
   riderMassKg: 80,
@@ -26,19 +36,6 @@ export const OPERATIONS = Object.freeze({
   /** Drive-train efficiency when lifting a load. */
   driveEfficiency: 0.85,
 });
-
-const EARTH_RADIUS_M = 6371008.8;
-const toRadians = (degrees) => (degrees * Math.PI) / 180;
-
-/** Great-circle distance in metres between two [lng, lat] positions. */
-export function haversineMeters([lngA, latA], [lngB, latB]) {
-  const dLat = toRadians(latB - latA);
-  const dLng = toRadians(lngB - lngA);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(latA)) * Math.cos(toRadians(latB)) * Math.sin(dLng / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
-}
 
 /**
  * Height of a station's rooftop platform above sea level in metres, or null
@@ -66,20 +63,16 @@ export function buildNetwork(featureCollection) {
     if (featureType === 'station') {
       stations.set(feature.id, {
         id: feature.id,
-        coordinates: feature.geometry.coordinates,
+        coordinates: [...feature.geometry.coordinates],
+        surveyedCoordinates: Object.freeze([...feature.geometry.coordinates]),
         ...properties,
       });
     } else if (featureType === 'alignment') {
-      lines.push({
-        id: feature.id,
-        coordinates: feature.geometry.coordinates,
-        ...properties,
-      });
+      lines.push({ id: feature.id, ...properties });
     }
   }
 
   for (const line of lines) {
-    line.lengthMeters = pathLength(line.coordinates);
     for (const stationId of line.stations) {
       if (!stations.has(stationId)) {
         throw new Error(`Line "${line.id}" references unknown station "${stationId}"`);
@@ -87,33 +80,66 @@ export function buildNetwork(featureCollection) {
     }
   }
 
-  return { stations, lines, edges: buildEdges(stations, lines) };
+  const network = { stations, lines, edges: new Map(), transit: null };
+  refreshGeometry(network);
+  return network;
 }
 
-function pathLength(coordinates) {
-  let total = 0;
-  for (let i = 1; i < coordinates.length; i += 1) {
-    total += haversineMeters(coordinates[i - 1], coordinates[i]);
-  }
-  return total;
-}
-
-/** One bidirectional edge per span between consecutive stations on a line. */
-function buildEdges(stations, lines) {
+/**
+ * Rebuilds everything derived from station positions: each line's path and
+ * length, and the span graph the route search runs on. Lines run straight
+ * from station to station, so their geometry is fully determined by them.
+ */
+function refreshGeometry(network) {
+  const { stations, lines } = network;
   const edges = new Map([...stations.keys()].map((id) => [id, []]));
+
   for (const line of lines) {
+    line.coordinates = line.stations.map((id) => stations.get(id).coordinates);
+    line.lengthMeters = pathLengthMeters(line.coordinates);
+
+    // One bidirectional edge per span between consecutive stations.
     for (let i = 1; i < line.stations.length; i += 1) {
       const from = line.stations[i - 1];
       const to = line.stations[i];
-      const meters = haversineMeters(
-        stations.get(from).coordinates,
-        stations.get(to).coordinates,
-      );
+      const meters = distanceMeters(stations.get(from).coordinates, stations.get(to).coordinates);
       edges.get(from).push({ to, lineId: line.id, meters });
       edges.get(to).push({ to: from, lineId: line.id, meters });
     }
   }
-  return edges;
+
+  network.edges = edges;
+}
+
+/** Moves a station and updates every line and span that touches it. */
+export function moveStation(network, stationId, coordinates) {
+  const station = network.stations.get(stationId);
+  if (!station) return;
+  station.coordinates = [coordinates[0], coordinates[1]];
+  refreshGeometry(network);
+}
+
+/** Puts every station back on its surveyed position. */
+export function resetLayout(network) {
+  for (const station of network.stations.values()) {
+    station.coordinates = [...station.surveyedCoordinates];
+  }
+  refreshGeometry(network);
+}
+
+export function isLayoutModified(network) {
+  return [...network.stations.values()].some(
+    ({ coordinates, surveyedCoordinates }) =>
+      coordinates[0] !== surveyedCoordinates[0] || coordinates[1] !== surveyedCoordinates[1],
+  );
+}
+
+/**
+ * Attaches the precalculated campus bus matrix (see
+ * tools/build-transit-matrix.mjs) so trips can be compared against it.
+ */
+export function attachTransitMatrix(network, matrix) {
+  network.transit = matrix;
 }
 
 /**
@@ -203,14 +229,9 @@ export function planTrip(network, originId, destinationId) {
   const origin = network.stations.get(originId);
   const destination = network.stations.get(destinationId);
   const rideMeters = legs.reduce((sum, leg) => sum + leg.meters, 0);
-  const averageWaitSeconds = OPERATIONS.peakHeadwaySeconds / 2;
-  const skylinkSeconds =
-    arrival.seconds + 2 * OPERATIONS.stationAccessSeconds + averageWaitSeconds;
-
-  const walkMeters =
-    haversineMeters(origin.coordinates, destination.coordinates) *
-    OPERATIONS.walkDetourFactor;
-  const walkSeconds = walkMeters / OPERATIONS.walkSpeedMps;
+  const skylink = skylinkBreakdown(origin, destination, rideMeters, arrival.seconds);
+  const walk = walkBreakdown(origin, destination);
+  const bus = network.transit?.pairs[`${originId}|${destinationId}`] ?? null;
 
   return {
     origin,
@@ -218,17 +239,49 @@ export function planTrip(network, originId, destinationId) {
     legs,
     transfers: legs.length - 1,
     rideMeters,
-    inCabinSeconds: arrival.seconds,
-    skylinkSeconds,
-    walkMeters,
-    walkSeconds,
-    savedSeconds: walkSeconds - skylinkSeconds,
+    skylink,
+    walk,
+    bus,
     coordinates: [
       origin.coordinates,
       ...spans.map((span) => network.stations.get(span.to).coordinates),
     ],
     profile: buildProfile(network, origin, spans),
   };
+}
+
+const elevatorSeconds = (station) =>
+  (station.platform_height_m ?? OPERATIONS.defaultPlatformHeightM) / OPERATIONS.elevatorSpeedMps;
+
+/** Door-to-door SkyLink time, split into the parts a rider experiences. */
+function skylinkBreakdown(origin, destination, rideMeters, inSystemSeconds) {
+  const cruiseSeconds = rideMeters / OPERATIONS.lineSpeedMps;
+  const parts = {
+    waitSeconds: OPERATIONS.peakHeadwaySeconds / 2,
+    accessSeconds:
+      2 * OPERATIONS.stationEntrySeconds + elevatorSeconds(origin) + elevatorSeconds(destination),
+    cruiseSeconds,
+    // Whatever the route search added beyond cruising: creeping through
+    // intermediate stations and changing lines.
+    dwellSeconds: inSystemSeconds - cruiseSeconds,
+  };
+  return {
+    ...parts,
+    meters: rideMeters,
+    totalSeconds: Object.values(parts).reduce((sum, seconds) => sum + seconds, 0),
+  };
+}
+
+function walkBreakdown(origin, destination) {
+  const meters =
+    distanceMeters(origin.coordinates, destination.coordinates) * OPERATIONS.walkDetourFactor;
+  const ascentMeters = Math.max(
+    0,
+    (destination.ground_elevation_m ?? 0) - (origin.ground_elevation_m ?? 0),
+  );
+  const flatSeconds = meters / OPERATIONS.walkSpeedMps;
+  const ascentSeconds = ascentMeters * OPERATIONS.walkAscentSecondsPerMeter;
+  return { meters, ascentMeters, flatSeconds, ascentSeconds, totalSeconds: flatSeconds + ascentSeconds };
 }
 
 /** Stations along the trip with their distance from the origin. */
