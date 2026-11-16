@@ -1,0 +1,57 @@
+/*
+ * Design tokens. IU Crimson and Cream are the two official brand colours;
+ * everything else is a neutral slate ramp chosen to sit behind them.
+ */
+:root {
+  /* Brand */
+  --iu-crimson: #990000;
+  --iu-crimson-bright: #c21f1f;
+  --iu-crimson-tint: #ff8a8a;
+  --iu-cream: #eeedeb;
+  --limestone: #cfc8b8;
+
+  /* Slate ramp */
+  --slate-950: #0b0f14;
+  --slate-900: #11161d;
+  --slate-800: #1b2129;
+  --slate-700: #2a323d;
+  --slate-500: #6b7685;
+  --slate-300: #aeb6c2;
+
+  /* Semantic */
+  --color-surface: var(--slate-950);
+  --color-text: var(--iu-cream);
+  --color-text-muted: var(--slate-300);
+  --color-border: rgb(238 237 235 / 0.14);
+  --color-positive: #7fd6a4;
+  --color-warning: #f2b872;
+  --color-focus: #ffd27a;
+
+  /* Glass panels */
+  --glass-fill: rgb(17 22 29 / 0.72);
+  --glass-fill-strong: rgb(17 22 29 / 0.9);
+  --glass-blur: blur(14px) saturate(140%);
+  --glass-shadow: 0 12px 40px rgb(0 0 0 / 0.45);
+
+  /* Type */
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+
+  /* Space and shape */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-pill: 999px;
+
+  --panel-width: 23.5rem;
+  --transition-fast: 140ms ease;
+}
