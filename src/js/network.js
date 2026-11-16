@@ -114,8 +114,10 @@ function refreshGeometry(network) {
 /** Moves a station and updates every line and span that touches it. */
 export function moveStation(network, stationId, coordinates) {
   const station = network.stations.get(stationId);
-  if (!station) return;
-  station.coordinates = [coordinates[0], coordinates[1]];
+  const [longitude, latitude] = coordinates ?? [];
+  // A drag event without a usable position leaves the station where it was.
+  if (!station || !Number.isFinite(longitude) || !Number.isFinite(latitude)) return;
+  station.coordinates = [longitude, latitude];
   refreshGeometry(network);
 }
 

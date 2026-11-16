@@ -74,6 +74,7 @@ export function createTransitMap(
   });
 
   let fleets = network.lines.map((line) => createCabinFleet(line));
+  const simulation = createSimulation(map, () => fleets);
   const hiddenLines = new Set();
   let isCorridorVisible = false;
 
@@ -170,7 +171,7 @@ export function createTransitMap(
     }
 
     for (const line of network.lines) applyLineVisibility(line.id);
-    startSimulation(map, () => fleets);
+    simulation.start();
   });
 
   const stationMarkers = new Map();
@@ -266,12 +267,20 @@ export function createTransitMap(
       fleets = network.lines.map((line) => createCabinFleet(line));
       styleReady.then(() => {
         for (const line of network.lines) {
-          map.getSource(line.id).setData(lineFeature(line));
+          map.getSource(line.id)?.setData(lineFeature(line));
           map
             .getSource(`${line.id}-corridor`)
-            .setData(corridorAround(line.coordinates, CORRIDOR_HALF_WIDTH_M));
+            ?.setData(corridorAround(line.coordinates, CORRIDOR_HALF_WIDTH_M));
         }
+        // Put the cabins on the new cables now instead of waiting for the next
+        // frame, which never comes when motion is reduced or the tab is hidden.
+        simulation.redraw();
       });
+    },
+
+    /** Restarts the cabin animation loop, for use after a layout reset. */
+    restartSimulation() {
+      styleReady.then(() => simulation.start());
     },
 
     fitNetwork,
@@ -423,7 +432,9 @@ function createCabinFleet(line) {
   const length = pathLengthMeters(path);
   const loopLength = 2 * length;
   const spacing = OPERATIONS.lineSpeedMps * OPERATIONS.peakHeadwaySeconds;
-  const cabinCount = Math.max(2, Math.floor(loopLength / spacing));
+  // A line squashed to nothing mid-drag carries no cabins until it has length again.
+  const isRunnable = Number.isFinite(length) && length > 0;
+  const cabinCount = isRunnable ? Math.max(2, Math.floor(loopLength / spacing)) : 0;
 
   // Out along the path, then back the same way.
   const positionAt = (loopMeters) =>
@@ -436,27 +447,52 @@ function createCabinFleet(line) {
       const travelled = elapsedSeconds * OPERATIONS.lineSpeedMps * SIMULATION_SPEEDUP;
       const coordinates = Array.from({ length: cabinCount }, (_, index) =>
         positionAt(((index * loopLength) / cabinCount + travelled) % loopLength),
-      );
+      ).filter(Boolean);
       return { type: 'Feature', geometry: { type: 'MultiPoint', coordinates } };
     },
   };
 }
 
-/** @param {() => Array} getFleets Read each frame, since a layout edit replaces them. */
-function startSimulation(map, getFleets) {
+/**
+ * Cabin animation loop. A frame that fails (a line with no usable geometry
+ * in the middle of a drag, say) is skipped rather than allowed to stop the
+ * loop: the next frame is always scheduled before any drawing happens.
+ *
+ * @param {() => Array} getFleets Read each frame, since a layout edit replaces them.
+ */
+function createSimulation(map, getFleets) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const start = performance.now();
+  const startedAt = performance.now();
   let lastFrame = 0;
+  let frameRequest = null;
+
+  const draw = (now) => {
+    const elapsedSeconds = (now - startedAt) / 1000;
+    for (const fleet of getFleets()) {
+      try {
+        map.getSource(`${fleet.lineId}-cabins`)?.setData(fleet.positions(elapsedSeconds));
+      } catch (error) {
+        console.warn(`Skipped a cabin frame for "${fleet.lineId}"`, error);
+      }
+    }
+  };
+
   const tick = (now) => {
+    frameRequest = requestAnimationFrame(tick);
     const due = now - lastFrame >= SIMULATION_FRAME_MS;
     if (due && !reducedMotion.matches && !document.hidden) {
       lastFrame = now;
-      const elapsedSeconds = (now - start) / 1000;
-      for (const fleet of getFleets()) {
-        map.getSource(`${fleet.lineId}-cabins`)?.setData(fleet.positions(elapsedSeconds));
-      }
+      draw(now);
     }
-    requestAnimationFrame(tick);
   };
-  requestAnimationFrame(tick);
+
+  return {
+    /** Starts the loop, or restarts it if it is already running. */
+    start() {
+      if (frameRequest !== null) cancelAnimationFrame(frameRequest);
+      frameRequest = requestAnimationFrame(tick);
+    },
+    /** Draws the cabins once, right now, whatever the motion settings. */
+    redraw: () => draw(performance.now()),
+  };
 }
