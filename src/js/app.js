@@ -36,13 +36,20 @@ async function start() {
       : 0;
 
   let planner;
-  const transitMap = createTransitMap(document.getElementById('map'), network, {
-    getLeftInset,
-    onStationAction(action, stationId) {
-      if (action === 'origin') planner.setOrigin(stationId);
-      else planner.setDestination(stationId);
-    },
-  });
+  let transitMap;
+  try {
+    transitMap = createTransitMap(document.getElementById('map'), network, {
+      getLeftInset,
+      onStationAction(action, stationId) {
+        if (action === 'origin') planner.setOrigin(stationId);
+        else planner.setDestination(stationId);
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    status.textContent = 'The map library could not be loaded. Check your connection and refresh.';
+    return;
+  }
 
   planner = createTripPlanner(document.getElementById('trip-planner'), network, {
     onTripChange: (trip) => transitMap.showTrip(trip),
