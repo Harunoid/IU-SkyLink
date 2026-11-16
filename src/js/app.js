@@ -1,11 +1,12 @@
 /**
- * Application entry point: loads the network data and wires the map and the
- * trip planner together. The modules never import each other; all cross-talk
- * goes through the callbacks set up here.
+ * Application entry point: loads the network data and wires the map, the
+ * trip planner and the cabin viewer together. The modules never import each
+ * other; all cross-talk goes through the callbacks set up here.
  */
 import { createTransitMap } from './map.js';
 import { loadNetwork, peakCapacityPerHour } from './network.js';
 import { createTripPlanner } from './planner.js';
+import { createCabinViewer } from './viewer.js';
 
 const NETWORK_DATA_URL = 'public/data/skylink-data.geojson';
 
@@ -57,6 +58,11 @@ async function start() {
   document
     .querySelector('[data-action="reset-view"]')
     .addEventListener('click', () => transitMap.fitNetwork());
+
+  const cabinViewer = createCabinViewer(document.getElementById('cabin-viewer'));
+  document
+    .querySelector('[data-action="open-viewer"]')
+    .addEventListener('click', () => cabinViewer.open());
 }
 
 start();
