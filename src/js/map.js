@@ -6,6 +6,7 @@
  * `window.maplibregl`.
  */
 import { BUILDING_LAYER_ID, basemapStyle } from './basemap.js';
+import { corridorAround, pathLengthMeters, positionAlong } from './geo.js';
 import { OPERATIONS, platformElevation } from './network.js';
 
 const CAMPUS_CENTER = [-86.5175, 39.1712];
@@ -23,20 +24,30 @@ const CABIN_COLOR = { crimson: '#ff8a8a' };
 const HOST_BUILDING_COLOR = '#cfc8b8';
 const DEFAULT_HOST_HEIGHT_M = 20;
 
+/** Half-width of the clearance corridor drawn either side of each cable. */
+const CORRIDOR_HALF_WIDTH_M = 15;
+const CORRIDOR_COLOR = '#990000';
+
 const emptyCollection = () => ({ type: 'FeatureCollection', features: [] });
+const lineFeature = (line) => ({
+  type: 'Feature',
+  geometry: { type: 'LineString', coordinates: line.coordinates },
+});
 
 /**
  * @param {HTMLElement} container
  * @param {{stations: Map, lines: Array}} network
  * @param {object} [options]
- * @param {(action: 'origin'|'destination', stationId: string) => void} [options.onStationAction]
+ * @param {(action: 'origin'|'destination'|'survey', stationId: string) => void} [options.onStationAction]
+ * @param {(stationId: string, coordinates: [number, number]) => void} [options.onStationMove]
+ *   Called continuously while a station is dragged in edit mode.
  * @param {() => number} [options.getLeftInset] Width in px of any panel
  *   overlapping the map's left edge, so fitted views stay clear of it.
  */
 export function createTransitMap(
   container,
   network,
-  { onStationAction, getLeftInset = () => 0 } = {},
+  { onStationAction, onStationMove, getLeftInset = () => 0 } = {},
 ) {
   const { maplibregl } = window;
   if (!maplibregl) throw new Error('MapLibre GL JS failed to load');
@@ -62,7 +73,22 @@ export function createTransitMap(
     else map.once('load', resolve);
   });
 
-  const fleets = network.lines.map((line) => createCabinFleet(line));
+  let fleets = network.lines.map((line) => createCabinFleet(line));
+  const hiddenLines = new Set();
+  let isCorridorVisible = false;
+
+  const setLayerVisible = (layerId, isVisible) => {
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
+    }
+  };
+  const applyLineVisibility = (lineId) => {
+    const isVisible = !hiddenLines.has(lineId);
+    for (const suffix of ['halo', 'line', 'cabins']) {
+      setLayerVisible(`${lineId}-${suffix}`, isVisible);
+    }
+    setLayerVisible(`${lineId}-corridor`, isVisible && isCorridorVisible);
+  };
 
   styleReady.then(() => {
     map.addSource('host-buildings', { type: 'geojson', data: emptyCollection() });
@@ -78,10 +104,25 @@ export function createTransitMap(
     });
 
     for (const line of network.lines) {
-      map.addSource(line.id, {
+      map.addSource(`${line.id}-corridor`, {
         type: 'geojson',
-        data: { type: 'Feature', geometry: { type: 'LineString', coordinates: line.coordinates } },
+        data: corridorAround(line.coordinates, CORRIDOR_HALF_WIDTH_M),
       });
+      map.addLayer({
+        id: `${line.id}-corridor`,
+        type: 'fill',
+        source: `${line.id}-corridor`,
+        layout: { visibility: 'none' },
+        paint: {
+          'fill-color': CORRIDOR_COLOR,
+          'fill-opacity': 0.22,
+          'fill-outline-color': '#ff8a8a',
+        },
+      });
+    }
+
+    for (const line of network.lines) {
+      map.addSource(line.id, { type: 'geojson', data: lineFeature(line) });
       // A translucent halo lifts the brand crimson off the dark basemap.
       map.addLayer({
         id: `${line.id}-halo`,
@@ -128,7 +169,8 @@ export function createTransitMap(
       });
     }
 
-    startSimulation(map, fleets);
+    for (const line of network.lines) applyLineVisibility(line.id);
+    startSimulation(map, () => fleets);
   });
 
   const stationMarkers = new Map();
@@ -144,6 +186,7 @@ export function createTransitMap(
       .setPopup(popup)
       .addTo(map);
     marker.getElement().setAttribute('aria-label', `${station.name} station`);
+    marker.on('drag', () => onStationMove?.(station.id, marker.getLngLat().toArray()));
     stationMarkers.set(station.id, marker);
   }
 
@@ -173,18 +216,24 @@ export function createTransitMap(
 
   return {
     setLineVisible(lineId, isVisible) {
+      if (isVisible) hiddenLines.delete(lineId);
+      else hiddenLines.add(lineId);
+      styleReady.then(() => applyLineVisibility(lineId));
+    },
+
+    /** Shows the clearance band either side of every visible cable. */
+    setCorridorVisible(isVisible) {
+      isCorridorVisible = isVisible;
       styleReady.then(() => {
-        for (const suffix of ['halo', 'line', 'cabins']) {
-          const layerId = `${lineId}-${suffix}`;
-          if (map.getLayer(layerId)) {
-            map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
-          }
-        }
+        for (const line of network.lines) applyLineVisibility(line.id);
       });
     },
 
-    showTrip(trip) {
-      closePopups();
+    /**
+     * Highlights a planned trip. Pass `fit: false` to leave the camera where
+     * it is, as when the trip is redrawn under a station being dragged.
+     */
+    showTrip(trip, { fit = true } = {}) {
       styleReady.then(() => {
         map.getSource('trip').setData(
           trip
@@ -192,7 +241,37 @@ export function createTransitMap(
             : emptyCollection(),
         );
       });
+      if (!fit) return;
+      closePopups();
       if (trip) fitTo(trip.coordinates, 72, { maxZoom: 16 });
+    },
+
+    /** Lets stations be dragged to try alternative layouts. */
+    setEditable(isEditable) {
+      container.classList.toggle('map--editing', isEditable);
+      if (isEditable) closePopups();
+      for (const marker of stationMarkers.values()) marker.setDraggable(isEditable);
+    },
+
+    /**
+     * Redraws everything that follows station positions: markers, cables,
+     * corridors and the cabin fleets. Call after the network model changes.
+     */
+    syncNetwork() {
+      for (const [stationId, marker] of stationMarkers) {
+        const [lng, lat] = network.stations.get(stationId).coordinates;
+        const current = marker.getLngLat();
+        if (current.lng !== lng || current.lat !== lat) marker.setLngLat([lng, lat]);
+      }
+      fleets = network.lines.map((line) => createCabinFleet(line));
+      styleReady.then(() => {
+        for (const line of network.lines) {
+          map.getSource(line.id).setData(lineFeature(line));
+          map
+            .getSource(`${line.id}-corridor`)
+            .setData(corridorAround(line.coordinates, CORRIDOR_HALF_WIDTH_M));
+        }
+      });
     },
 
     fitNetwork,
@@ -221,6 +300,7 @@ export function createTransitMap(
         map.getSource('host-buildings').setData({ type: 'FeatureCollection', features });
         // The generic building under each station would poke through otherwise.
         if (map.getLayer(BUILDING_LAYER_ID)) map.moveLayer('host-buildings');
+        for (const line of network.lines) map.moveLayer(`${line.id}-corridor`);
         for (const line of network.lines) {
           map.moveLayer(`${line.id}-halo`);
           map.moveLayer(`${line.id}-line`);
@@ -315,7 +395,13 @@ function stationPopup(station, network, onStationAction) {
     actions.append(button);
   }
 
-  root.append(heading, role, lineList, facts, actions);
+  const surveyButton = document.createElement('button');
+  surveyButton.type = 'button';
+  surveyButton.className = 'button button--small station-card__survey';
+  surveyButton.textContent = 'View station survey & concepts';
+  surveyButton.addEventListener('click', () => onStationAction?.('survey', station.id));
+
+  root.append(heading, role, lineList, facts, actions, surveyButton);
   return root;
 }
 
@@ -334,25 +420,14 @@ function accessSummary(station) {
  */
 function createCabinFleet(line) {
   const path = line.coordinates;
-  const cumulative = [0];
-  for (let i = 1; i < path.length; i += 1) {
-    cumulative.push(cumulative[i - 1] + distanceMeters(path[i - 1], path[i]));
-  }
-  const length = cumulative[cumulative.length - 1];
+  const length = pathLengthMeters(path);
   const loopLength = 2 * length;
   const spacing = OPERATIONS.lineSpeedMps * OPERATIONS.peakHeadwaySeconds;
   const cabinCount = Math.max(2, Math.floor(loopLength / spacing));
 
-  const positionAt = (loopMeters) => {
-    const outbound = loopMeters <= length ? loopMeters : loopLength - loopMeters;
-    let segment = 1;
-    while (segment < cumulative.length - 1 && cumulative[segment] < outbound) segment += 1;
-    const segmentStart = cumulative[segment - 1];
-    const t = (outbound - segmentStart) / (cumulative[segment] - segmentStart);
-    const [lngA, latA] = path[segment - 1];
-    const [lngB, latB] = path[segment];
-    return [lngA + (lngB - lngA) * t, latA + (latB - latA) * t];
-  };
+  // Out along the path, then back the same way.
+  const positionAt = (loopMeters) =>
+    positionAlong(path, loopMeters <= length ? loopMeters : loopLength - loopMeters);
 
   return {
     lineId: line.id,
@@ -367,7 +442,8 @@ function createCabinFleet(line) {
   };
 }
 
-function startSimulation(map, fleets) {
+/** @param {() => Array} getFleets Read each frame, since a layout edit replaces them. */
+function startSimulation(map, getFleets) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const start = performance.now();
   let lastFrame = 0;
@@ -376,19 +452,11 @@ function startSimulation(map, fleets) {
     if (due && !reducedMotion.matches && !document.hidden) {
       lastFrame = now;
       const elapsedSeconds = (now - start) / 1000;
-      for (const fleet of fleets) {
+      for (const fleet of getFleets()) {
         map.getSource(`${fleet.lineId}-cabins`)?.setData(fleet.positions(elapsedSeconds));
       }
     }
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
-}
-
-// Equirectangular approximation: plenty for interpolating along sub-2 km spans.
-function distanceMeters([lngA, latA], [lngB, latB]) {
-  const metersPerDegree = 111320;
-  const x = (lngB - lngA) * metersPerDegree * Math.cos(((latA + latB) / 2) * (Math.PI / 180));
-  const y = (latB - latA) * metersPerDegree;
-  return Math.hypot(x, y);
 }

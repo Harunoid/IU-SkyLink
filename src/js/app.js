@@ -1,17 +1,37 @@
 /**
- * Application entry point: loads the network data and wires the map, the
- * trip planner and the cabin viewer together. The modules never import each
+ * Application entry point: loads the data and wires the map, the trip
+ * planner, the layout sandbox and the dialogs together. The modules never import each
  * other; all cross-talk goes through the callbacks set up here.
  */
 import { loadHostBuildings } from './buildings.js';
 import { createTransitMap } from './map.js';
-import { loadNetwork, peakCapacityPerHour } from './network.js';
+import {
+  attachTransitMatrix,
+  isLayoutModified,
+  loadNetwork,
+  moveStation,
+  peakCapacityPerHour,
+  resetLayout,
+} from './network.js';
 import { createTripPlanner } from './planner.js';
+import { createStationSurvey } from './survey.js';
 import { createCabinViewer } from './viewer.js';
 import { startWindStatus } from './weather.js';
 
 const NETWORK_DATA_URL = 'public/data/skylink-data.geojson';
+const TRANSIT_MATRIX_URL = 'public/data/transit-matrix.json';
+const STATION_SURVEYS_URL = 'public/data/stations.json';
 
+/** Supporting data: the page still works if one of these fails to load. */
+async function loadOptionalJson(url) {
+  try {
+    const response = await fetch(url);
+    return response.ok ? await response.json() : null;
+  } catch (error) {
+    console.warn(`Optional data unavailable: ${url}`, error);
+    return null;
+  }
+}
 
 /** Opening scenario: the commuter lot to the south end of campus. */
 const DEFAULT_TRIP = { origin: 'stadium', destination: 'ballantine' };
@@ -21,14 +41,26 @@ async function start() {
 
   startWindStatus(document.querySelector('[data-wind-status]'));
 
+  const transitMatrixRequest = loadOptionalJson(TRANSIT_MATRIX_URL);
+  const surveysRequest = loadOptionalJson(STATION_SURVEYS_URL);
+
   let network;
   try {
     network = await loadNetwork(NETWORK_DATA_URL);
   } catch (error) {
     console.error(error);
-    status.textContent = 'The network data could not be loaded. Refresh the page to try again.';
+    status.textContent = 'The network could not be loaded. Refresh the page to try again.';
     return;
   }
+
+  const transitMatrix = await transitMatrixRequest;
+  if (transitMatrix) attachTransitMatrix(network, transitMatrix);
+
+  const stationSurvey = createStationSurvey(
+    document.getElementById('station-survey'),
+    network,
+    (await surveysRequest) ?? {},
+  );
 
   document.querySelector('[data-stat="capacity"]').textContent =
     peakCapacityPerHour().toLocaleString('en-US');
@@ -47,7 +79,12 @@ async function start() {
       getLeftInset,
       onStationAction(action, stationId) {
         if (action === 'origin') planner.setOrigin(stationId);
-        else planner.setDestination(stationId);
+        else if (action === 'destination') planner.setDestination(stationId);
+        else stationSurvey.open(stationId);
+      },
+      onStationMove(stationId, coordinates) {
+        moveStation(network, stationId, coordinates);
+        syncLayout();
       },
     });
   } catch (error) {
@@ -62,7 +99,8 @@ async function start() {
   });
 
   planner = createTripPlanner(document.getElementById('trip-planner'), network, {
-    onTripChange: (trip) => transitMap.showTrip(trip),
+    // Keep the camera still while a station is being dragged.
+    onTripChange: (trip, { layoutChanged }) => transitMap.showTrip(trip, { fit: !layoutChanged }),
   });
   planner.setTrip(DEFAULT_TRIP.origin, DEFAULT_TRIP.destination);
 
@@ -75,6 +113,36 @@ async function start() {
   document
     .querySelector('[data-action="reset-view"]')
     .addEventListener('click', () => transitMap.fitNetwork());
+
+  document.querySelector('[data-action="toggle-corridor"]').addEventListener('change', (event) => {
+    transitMap.setCorridorVisible(event.target.checked);
+  });
+
+  // Sandbox: drag stations to try other layouts; nothing is saved.
+  const editToggle = document.querySelector('[data-action="toggle-edit"]');
+  const resetLayoutButton = document.querySelector('[data-action="reset-layout"]');
+  const sandboxNote = document.querySelector('[data-sandbox-note]');
+
+  /** Redraws the map and re-plans the trip after the network model changes. */
+  function syncLayout() {
+    transitMap.syncNetwork();
+    planner.refresh();
+    const isModified = isLayoutModified(network);
+    resetLayoutButton.hidden = !isModified;
+    sandboxNote.hidden = !isModified;
+  }
+
+  editToggle.addEventListener('click', () => {
+    const isEditing = editToggle.getAttribute('aria-pressed') !== 'true';
+    editToggle.setAttribute('aria-pressed', String(isEditing));
+    editToggle.textContent = isEditing ? 'Lock network' : 'Edit network layout';
+    transitMap.setEditable(isEditing);
+  });
+
+  resetLayoutButton.addEventListener('click', () => {
+    resetLayout(network);
+    syncLayout();
+  });
 
   const tiltToggle = document.querySelector('[data-action="toggle-tilt"]');
   tiltToggle.addEventListener('click', () => {
