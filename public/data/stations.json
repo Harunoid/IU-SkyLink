@@ -1,0 +1,62 @@
+{
+  "_about": "Survey notes and photos for each station, keyed by the station id used in skylink-data.geojson. Clearance notes are design intent for the concept, not measured site conditions. Add photos as { \"url\": \"images/stations/<file>\", \"caption\": \"...\", \"credit\": \"...\" } with the url relative to public/.",
+  "stadium": {
+    "photos": [],
+    "station_type": "End terminal with drive machinery and cabin storage",
+    "clearance_notes": [
+      "Platform sits on the upper concourse level, outside the seating bowl sightlines.",
+      "Departing cable climbs away from the stand before crossing 17th Street.",
+      "Game-day queuing is held at concourse level, below the boarding platform."
+    ]
+  },
+  "wells": {
+    "photos": [],
+    "station_type": "Through station and junction for the 10th Street spur",
+    "clearance_notes": [
+      "Platform is placed on the lower block so cables pass beside, not over, the taller tower.",
+      "The spur leaves eastward along the 10th Street corridor to avoid crossing the Arboretum canopy.",
+      "Deflection bay turns the Crimson Line toward the IMU inside the station envelope."
+    ]
+  },
+  "imu": {
+    "photos": [],
+    "station_type": "Central transfer hub, two lines on one platform level",
+    "clearance_notes": [
+      "Station frame is set back from the historic limestone parapets and tower.",
+      "Limestone-clad enclosure keeps the roofline reading as part of the existing building.",
+      "Cross-platform transfer between the Crimson and Limestone lines without changing level."
+    ]
+  },
+  "ballantine": {
+    "photos": [],
+    "station_type": "Through station",
+    "clearance_notes": [
+      "Approach spans stay clear of the Dunn's Woods canopy to the west.",
+      "Rooftop mechanical plant is bridged by the platform deck, not relocated."
+    ]
+  },
+  "optometry": {
+    "photos": [],
+    "station_type": "End terminal with tensioning station",
+    "clearance_notes": [
+      "Arriving cable crosses Third Street with clearance for buses and service vehicles.",
+      "Terminal return wheel is housed within the roof frame, back from the Atwater Avenue frontage."
+    ]
+  },
+  "gisb": {
+    "photos": [],
+    "station_type": "Through station",
+    "clearance_notes": [
+      "Shortest host building on the network; the platform deck is raised on the station frame to hold cable clearance over Eagleson Avenue.",
+      "Alignment follows the building's long axis to keep clear of the Wells Library spur."
+    ]
+  },
+  "eigenmann": {
+    "photos": [],
+    "station_type": "End terminal for the Limestone Line and the spur",
+    "clearance_notes": [
+      "Highest platform on the network, so westbound cabins leave on a descending run.",
+      "Two arriving cables enter from the west on separate bays of the same platform."
+    ]
+  }
+}
