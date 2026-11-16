@@ -627,7 +627,7 @@ svg {
   margin-block-start: var(--space-2);
 }
 
-/* Map overlays (Leaflet)
+/* Map overlays (MapLibre)
    -------------------------------------------------------------------------- */
 .map-note {
   position: absolute;
@@ -640,13 +640,6 @@ svg {
   color: var(--color-text-muted);
   font-size: var(--text-xs);
   pointer-events: none;
-}
-
-.host-building {
-  fill: var(--limestone);
-  fill-opacity: 0.22;
-  stroke: var(--limestone);
-  stroke-opacity: 0.8;
 }
 
 .station-marker {
@@ -668,8 +661,14 @@ svg {
   outline-offset: 1px;
 }
 
-.leaflet-marker-icon:hover .station-marker,
-.leaflet-marker-icon:focus-visible .station-marker {
+.station-pin {
+  inline-size: 18px;
+  block-size: 18px;
+  cursor: pointer;
+}
+
+.station-pin:hover .station-marker,
+.station-pin:focus-visible .station-marker {
   transform: scale(1.25);
 }
 
@@ -689,7 +688,7 @@ svg {
 
 .station-label--left {
   inset-inline-start: auto;
-  inset-inline-end: 8px;
+  inset-inline-end: 26px;
 }
 
 .station-label--below {
@@ -698,37 +697,48 @@ svg {
   translate: -50% 0;
 }
 
-.trip-highlight {
-  animation: trip-dash 1.2s linear infinite;
-}
-
-@keyframes trip-dash {
-  to {
-    stroke-dashoffset: -18;
-  }
-}
-
-.station-popup .leaflet-popup-content-wrapper,
-.station-popup .leaflet-popup-tip {
-  background: var(--glass-fill-strong);
-  color: var(--color-text);
-  box-shadow: var(--glass-shadow);
-}
-
-.station-popup .leaflet-popup-content-wrapper {
+.station-popup .maplibregl-popup-content {
+  padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  background: var(--glass-fill-strong);
+  color: var(--color-text);
+  font: inherit;
+  box-shadow: var(--glass-shadow);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
 
-.station-popup .leaflet-popup-content {
-  margin: var(--space-4);
-  font: inherit;
+/* The tip is a CSS triangle whose visible edge depends on the anchor side. */
+.station-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.station-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.station-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--slate-900);
 }
 
-.station-popup a.leaflet-popup-close-button {
+.station-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.station-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.station-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--slate-900);
+}
+
+.station-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--slate-900);
+}
+
+.station-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--slate-900);
+}
+
+.station-popup .maplibregl-popup-close-button {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
   color: var(--color-text-muted);
+  font-size: 1.1rem;
+}
+
+.station-popup .maplibregl-popup-close-button:hover {
+  background: rgb(238 237 235 / 0.12);
 }
 
 .station-card {
@@ -791,38 +801,50 @@ svg {
   margin-block-start: var(--space-1);
 }
 
-.leaflet-container {
+.maplibregl-map {
   font-family: var(--font-sans);
 }
 
-.leaflet-bar a,
-.leaflet-bar a:hover {
-  border-color: var(--slate-700);
+.maplibregl-ctrl-group {
   background: var(--slate-800);
-  color: var(--iu-cream);
+  box-shadow: 0 0 0 1px var(--slate-700);
 }
 
-.leaflet-control-attribution,
-.leaflet-control-scale-line {
-  border-color: var(--slate-500);
-  background: rgb(11 15 20 / 0.7) !important;
+.maplibregl-ctrl-group button + button {
+  border-block-start-color: var(--slate-700);
+}
+
+/* MapLibre's control icons are dark SVGs; invert them for the dark theme. */
+.maplibregl-ctrl-group .maplibregl-ctrl-icon {
+  filter: invert(1);
+}
+
+.maplibregl-ctrl-scale {
+  border-color: var(--slate-300);
+  background: rgb(11 15 20 / 0.7);
   color: var(--slate-300);
-  text-shadow: none;
 }
 
-.leaflet-control-attribution a {
+.maplibregl-ctrl-attrib.maplibregl-compact,
+.maplibregl-ctrl-attrib {
+  background: rgb(11 15 20 / 0.75);
+  color: var(--slate-300);
+}
+
+.maplibregl-ctrl-attrib a {
   color: var(--iu-cream);
 }
 
-.leaflet-tooltip {
-  border: 1px solid var(--color-border);
+.maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+}
+
+.map-tilt {
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-end: var(--space-4);
+  z-index: 900;
   background: var(--glass-fill-strong);
-  color: var(--iu-cream);
-  box-shadow: none;
-}
-
-.leaflet-tooltip::before {
-  display: none;
 }
 
 /* Cabin viewer dialog

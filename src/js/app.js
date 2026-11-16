@@ -76,6 +76,13 @@ async function start() {
     .querySelector('[data-action="reset-view"]')
     .addEventListener('click', () => transitMap.fitNetwork());
 
+  const tiltToggle = document.querySelector('[data-action="toggle-tilt"]');
+  tiltToggle.addEventListener('click', () => {
+    const shouldTilt = tiltToggle.getAttribute('aria-pressed') !== 'true';
+    tiltToggle.setAttribute('aria-pressed', String(shouldTilt));
+    transitMap.setTilted(shouldTilt);
+  });
+
   const cabinViewer = createCabinViewer(document.getElementById('cabin-viewer'));
   document
     .querySelector('[data-action="open-viewer"]')
