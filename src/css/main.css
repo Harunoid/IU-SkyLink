@@ -122,6 +122,49 @@ svg {
   font-size: var(--text-sm);
 }
 
+.wind-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  line-height: 1.25;
+}
+
+.wind-status[hidden] {
+  display: none;
+}
+
+.wind-status > span:last-child {
+  display: grid;
+}
+
+.wind-status small {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.wind-status__dot {
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  border-radius: 50%;
+  background: var(--color-positive);
+  box-shadow: 0 0 0 3px rgb(127 214 164 / 0.2);
+}
+
+.wind-status[data-level="reduced"] .wind-status__dot {
+  background: var(--color-warning);
+  box-shadow: 0 0 0 3px rgb(242 184 114 / 0.2);
+}
+
+.wind-status[data-level="hold"] .wind-status__dot {
+  background: var(--iu-crimson-tint);
+  box-shadow: 0 0 0 3px rgb(255 138 138 / 0.2);
+}
+
 .system-stats {
   display: flex;
   flex-wrap: wrap;
@@ -518,6 +561,58 @@ svg {
   background: var(--iu-cream);
 }
 
+/* Elevation profile */
+.profile {
+  margin: 0;
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--color-border);
+}
+
+.profile svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  stroke: none;
+}
+
+.profile__ground {
+  fill: var(--slate-700);
+}
+
+.profile__building {
+  stroke: var(--limestone);
+  stroke-width: 5;
+  stroke-linecap: butt;
+}
+
+.profile__cable {
+  fill: none;
+  stroke: var(--iu-crimson-bright);
+  stroke-width: 2;
+}
+
+.profile__platform {
+  fill: var(--iu-cream);
+  stroke: var(--iu-crimson);
+  stroke-width: 1.5;
+}
+
+.profile__axis,
+.profile__label {
+  fill: var(--color-text-muted);
+  font: 400 9px var(--font-sans);
+}
+
+.profile__axis {
+  font-family: var(--font-mono);
+}
+
+.profile__caption {
+  margin-block-start: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
 .assumptions {
   margin-block-start: var(--space-3);
   color: var(--color-text-muted);
@@ -545,6 +640,13 @@ svg {
   color: var(--color-text-muted);
   font-size: var(--text-xs);
   pointer-events: none;
+}
+
+.host-building {
+  fill: var(--limestone);
+  fill-opacity: 0.22;
+  stroke: var(--limestone);
+  stroke-opacity: 0.8;
 }
 
 .station-marker {

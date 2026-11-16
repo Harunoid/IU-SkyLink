@@ -4,7 +4,7 @@
  *
  * Leaflet is loaded from the CDN as a classic script and read off `window.L`.
  */
-import { OPERATIONS } from './network.js';
+import { OPERATIONS, platformElevation } from './network.js';
 
 const CAMPUS_CENTER = [39.1712, -86.5175];
 const BASEMAP_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
@@ -58,6 +58,7 @@ export function createTransitMap(
   }).addTo(map);
 
   // Panes keep draw order stable regardless of when layers are toggled.
+  map.createPane('buildings').style.zIndex = 405;
   map.createPane('alignments').style.zIndex = 410;
   map.createPane('trip').style.zIndex = 420;
   map.createPane('cabins').style.zIndex = 430;
@@ -157,6 +158,15 @@ export function createTransitMap(
     clearTrip,
     fitNetwork,
 
+    /** Draws the footprints of the buildings that carry stations. */
+    showHostBuildings(featureCollection) {
+      L.geoJSON(featureCollection, {
+        pane: 'buildings',
+        interactive: false,
+        style: { className: 'host-building', weight: 1.5 },
+      }).addTo(map);
+    },
+
     focusStation(stationId) {
       const marker = stationMarkers.get(stationId);
       if (!marker) return;
@@ -215,6 +225,14 @@ function stationPopup(station, network, onStationAction) {
   addFact('Access', accessSummary(station));
   addFact('Fare', station.fare_media.join(' · '));
   addFact('Peak headway', `${OPERATIONS.peakHeadwaySeconds} s`);
+  const elevation = platformElevation(station);
+  if (elevation !== null) {
+    addFact(
+      'Platform',
+      `${Math.round(elevation)} m above sea level, ` +
+        `${Math.round(station.platform_height_m)} m above the ground`,
+    );
+  }
 
   const actions = document.createElement('div');
   actions.className = 'station-card__actions';

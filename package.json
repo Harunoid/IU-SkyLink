@@ -1,11 +1,12 @@
 {
   "name": "iu-skylink",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Interactive system map and cabin viewer for the IU SkyLink rooftop aerial transit concept",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8080",
-    "build:model": "node tools/build-cabin-model.mjs"
+    "build:model": "node tools/build-cabin-model.mjs",
+    "fetch:data": "node tools/fetch-campus-data.mjs"
   }
 }

@@ -19,6 +19,12 @@ export const OPERATIONS = Object.freeze({
   /** Campus paths are not straight lines; scales crow-fly distance. */
   walkDetourFactor: 1.3,
   passingPeriodSeconds: 15 * 60,
+  /** Average rider with bag, for potential-energy estimates. */
+  riderMassKg: 80,
+  /** Share of a descending load's potential energy that reaches the batteries. */
+  regenEfficiency: 0.6,
+  /** Drive-train efficiency when lifting a load. */
+  driveEfficiency: 0.85,
 });
 
 const EARTH_RADIUS_M = 6371008.8;
@@ -32,6 +38,15 @@ export function haversineMeters([lngA, latA], [lngB, latB]) {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRadians(latA)) * Math.cos(toRadians(latB)) * Math.sin(dLng / 2) ** 2;
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
+}
+
+/**
+ * Height of a station's rooftop platform above sea level in metres, or null
+ * when the survey data for that station is incomplete.
+ */
+export function platformElevation(station) {
+  const { ground_elevation_m: ground, platform_height_m: height } = station;
+  return Number.isFinite(ground) && Number.isFinite(height) ? ground + height : null;
 }
 
 export async function loadNetwork(url) {
@@ -212,7 +227,19 @@ export function planTrip(network, originId, destinationId) {
       origin.coordinates,
       ...spans.map((span) => network.stations.get(span.to).coordinates),
     ],
+    profile: buildProfile(network, origin, spans),
   };
+}
+
+/** Stations along the trip with their distance from the origin. */
+function buildProfile(network, origin, spans) {
+  const profile = [{ station: origin, meters: 0 }];
+  let meters = 0;
+  for (const span of spans) {
+    meters += span.meters;
+    profile.push({ station: network.stations.get(span.to), meters });
+  }
+  return profile;
 }
 
 /** Theoretical one-direction throughput of a line at peak headway. */
