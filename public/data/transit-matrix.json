@@ -1,0 +1,436 @@
+{
+  "generated": "2026-11-16",
+  "service": {
+    "label": "Campus bus",
+    "basis": "Modelled on a frequent campus circulator (IU Campus Bus Route A pattern)",
+    "headwaySeconds": 600,
+    "stopAccessSeconds": 120,
+    "roadDetourFactor": 1.4,
+    "runningSpeedMps": 7,
+    "stopSpacingMeters": 400,
+    "dwellSecondsPerStop": 25,
+    "trafficDelayShare": 0.2
+  },
+  "pairs": {
+    "stadium|wells": {
+      "meters": 1853,
+      "intermediateStops": 4,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 265,
+      "dwellSeconds": 100,
+      "delaySeconds": 53,
+      "totalSeconds": 958
+    },
+    "stadium|imu": {
+      "meters": 2047,
+      "intermediateStops": 4,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 292,
+      "dwellSeconds": 100,
+      "delaySeconds": 58,
+      "totalSeconds": 990
+    },
+    "stadium|ballantine": {
+      "meters": 2330,
+      "intermediateStops": 5,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 333,
+      "dwellSeconds": 125,
+      "delaySeconds": 67,
+      "totalSeconds": 1065
+    },
+    "stadium|optometry": {
+      "meters": 2690,
+      "intermediateStops": 6,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 384,
+      "dwellSeconds": 150,
+      "delaySeconds": 77,
+      "totalSeconds": 1151
+    },
+    "stadium|gisb": {
+      "meters": 1950,
+      "intermediateStops": 4,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 279,
+      "dwellSeconds": 100,
+      "delaySeconds": 56,
+      "totalSeconds": 975
+    },
+    "stadium|eigenmann": {
+      "meters": 2588,
+      "intermediateStops": 5,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 370,
+      "dwellSeconds": 125,
+      "delaySeconds": 74,
+      "totalSeconds": 1109
+    },
+    "wells|stadium": {
+      "meters": 1853,
+      "intermediateStops": 4,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 265,
+      "dwellSeconds": 100,
+      "delaySeconds": 53,
+      "totalSeconds": 958
+    },
+    "wells|imu": {
+      "meters": 991,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 142,
+      "dwellSeconds": 25,
+      "delaySeconds": 28,
+      "totalSeconds": 735
+    },
+    "wells|ballantine": {
+      "meters": 948,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 135,
+      "dwellSeconds": 25,
+      "delaySeconds": 27,
+      "totalSeconds": 727
+    },
+    "wells|optometry": {
+      "meters": 1496,
+      "intermediateStops": 3,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 214,
+      "dwellSeconds": 75,
+      "delaySeconds": 43,
+      "totalSeconds": 872
+    },
+    "wells|gisb": {
+      "meters": 190,
+      "intermediateStops": 0,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 27,
+      "dwellSeconds": 0,
+      "delaySeconds": 5,
+      "totalSeconds": 572
+    },
+    "wells|eigenmann": {
+      "meters": 991,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 142,
+      "dwellSeconds": 25,
+      "delaySeconds": 28,
+      "totalSeconds": 735
+    },
+    "imu|stadium": {
+      "meters": 2047,
+      "intermediateStops": 4,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 292,
+      "dwellSeconds": 100,
+      "delaySeconds": 58,
+      "totalSeconds": 990
+    },
+    "imu|wells": {
+      "meters": 991,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 142,
+      "dwellSeconds": 25,
+      "delaySeconds": 28,
+      "totalSeconds": 735
+    },
+    "imu|ballantine": {
+      "meters": 367,
+      "intermediateStops": 0,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 52,
+      "dwellSeconds": 0,
+      "delaySeconds": 10,
+      "totalSeconds": 602
+    },
+    "imu|optometry": {
+      "meters": 657,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 94,
+      "dwellSeconds": 25,
+      "delaySeconds": 19,
+      "totalSeconds": 678
+    },
+    "imu|gisb": {
+      "meters": 836,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 119,
+      "dwellSeconds": 25,
+      "delaySeconds": 24,
+      "totalSeconds": 708
+    },
+    "imu|eigenmann": {
+      "meters": 1891,
+      "intermediateStops": 4,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 270,
+      "dwellSeconds": 100,
+      "delaySeconds": 54,
+      "totalSeconds": 964
+    },
+    "ballantine|stadium": {
+      "meters": 2330,
+      "intermediateStops": 5,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 333,
+      "dwellSeconds": 125,
+      "delaySeconds": 67,
+      "totalSeconds": 1065
+    },
+    "ballantine|wells": {
+      "meters": 948,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 135,
+      "dwellSeconds": 25,
+      "delaySeconds": 27,
+      "totalSeconds": 727
+    },
+    "ballantine|imu": {
+      "meters": 367,
+      "intermediateStops": 0,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 52,
+      "dwellSeconds": 0,
+      "delaySeconds": 10,
+      "totalSeconds": 602
+    },
+    "ballantine|optometry": {
+      "meters": 550,
+      "intermediateStops": 0,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 79,
+      "dwellSeconds": 0,
+      "delaySeconds": 16,
+      "totalSeconds": 635
+    },
+    "ballantine|gisb": {
+      "meters": 762,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 109,
+      "dwellSeconds": 25,
+      "delaySeconds": 22,
+      "totalSeconds": 696
+    },
+    "ballantine|eigenmann": {
+      "meters": 1708,
+      "intermediateStops": 3,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 244,
+      "dwellSeconds": 75,
+      "delaySeconds": 49,
+      "totalSeconds": 908
+    },
+    "optometry|stadium": {
+      "meters": 2690,
+      "intermediateStops": 6,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 384,
+      "dwellSeconds": 150,
+      "delaySeconds": 77,
+      "totalSeconds": 1151
+    },
+    "optometry|wells": {
+      "meters": 1496,
+      "intermediateStops": 3,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 214,
+      "dwellSeconds": 75,
+      "delaySeconds": 43,
+      "totalSeconds": 872
+    },
+    "optometry|imu": {
+      "meters": 657,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 94,
+      "dwellSeconds": 25,
+      "delaySeconds": 19,
+      "totalSeconds": 678
+    },
+    "optometry|ballantine": {
+      "meters": 550,
+      "intermediateStops": 0,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 79,
+      "dwellSeconds": 0,
+      "delaySeconds": 16,
+      "totalSeconds": 635
+    },
+    "optometry|gisb": {
+      "meters": 1311,
+      "intermediateStops": 2,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 187,
+      "dwellSeconds": 50,
+      "delaySeconds": 37,
+      "totalSeconds": 814
+    },
+    "optometry|eigenmann": {
+      "meters": 2221,
+      "intermediateStops": 5,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 317,
+      "dwellSeconds": 125,
+      "delaySeconds": 63,
+      "totalSeconds": 1045
+    },
+    "gisb|stadium": {
+      "meters": 1950,
+      "intermediateStops": 4,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 279,
+      "dwellSeconds": 100,
+      "delaySeconds": 56,
+      "totalSeconds": 975
+    },
+    "gisb|wells": {
+      "meters": 190,
+      "intermediateStops": 0,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 27,
+      "dwellSeconds": 0,
+      "delaySeconds": 5,
+      "totalSeconds": 572
+    },
+    "gisb|imu": {
+      "meters": 836,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 119,
+      "dwellSeconds": 25,
+      "delaySeconds": 24,
+      "totalSeconds": 708
+    },
+    "gisb|ballantine": {
+      "meters": 762,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 109,
+      "dwellSeconds": 25,
+      "delaySeconds": 22,
+      "totalSeconds": 696
+    },
+    "gisb|optometry": {
+      "meters": 1311,
+      "intermediateStops": 2,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 187,
+      "dwellSeconds": 50,
+      "delaySeconds": 37,
+      "totalSeconds": 814
+    },
+    "gisb|eigenmann": {
+      "meters": 1081,
+      "intermediateStops": 2,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 154,
+      "dwellSeconds": 50,
+      "delaySeconds": 31,
+      "totalSeconds": 775
+    },
+    "eigenmann|stadium": {
+      "meters": 2588,
+      "intermediateStops": 5,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 370,
+      "dwellSeconds": 125,
+      "delaySeconds": 74,
+      "totalSeconds": 1109
+    },
+    "eigenmann|wells": {
+      "meters": 991,
+      "intermediateStops": 1,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 142,
+      "dwellSeconds": 25,
+      "delaySeconds": 28,
+      "totalSeconds": 735
+    },
+    "eigenmann|imu": {
+      "meters": 1891,
+      "intermediateStops": 4,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 270,
+      "dwellSeconds": 100,
+      "delaySeconds": 54,
+      "totalSeconds": 964
+    },
+    "eigenmann|ballantine": {
+      "meters": 1708,
+      "intermediateStops": 3,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 244,
+      "dwellSeconds": 75,
+      "delaySeconds": 49,
+      "totalSeconds": 908
+    },
+    "eigenmann|optometry": {
+      "meters": 2221,
+      "intermediateStops": 5,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 317,
+      "dwellSeconds": 125,
+      "delaySeconds": 63,
+      "totalSeconds": 1045
+    },
+    "eigenmann|gisb": {
+      "meters": 1081,
+      "intermediateStops": 2,
+      "waitSeconds": 300,
+      "accessSeconds": 240,
+      "runSeconds": 154,
+      "dwellSeconds": 50,
+      "delaySeconds": 31,
+      "totalSeconds": 775
+    }
+  }
+}
