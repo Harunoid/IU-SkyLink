@@ -142,6 +142,7 @@ async function start() {
   resetLayoutButton.addEventListener('click', () => {
     resetLayout(network);
     syncLayout();
+    transitMap.restartSimulation();
   });
 
   const tiltToggle = document.querySelector('[data-action="toggle-tilt"]');
