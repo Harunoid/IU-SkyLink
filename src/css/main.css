@@ -19,8 +19,11 @@ body {
 
 body {
   margin: 0;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  /* Flex, not grid rows: sizing must not depend on the header and main being
+     the first and second children, because browser extensions inject their
+     own elements into <body>. */
+  display: flex;
+  flex-direction: column;
   background: var(--color-surface);
   color: var(--color-text);
   font: 400 var(--text-md) / 1.5 var(--font-sans);
@@ -81,6 +84,7 @@ svg {
 /* Header
    -------------------------------------------------------------------------- */
 .site-header {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -150,6 +154,7 @@ svg {
    -------------------------------------------------------------------------- */
 .hud {
   position: relative;
+  flex: 1 1 auto;
   min-block-size: 0;
   overflow: hidden;
 }
