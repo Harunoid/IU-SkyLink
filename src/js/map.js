@@ -212,7 +212,8 @@ function stationPopup(station, network, onStationAction) {
     facts.append(dt, dd);
   };
   addFact('Address', station.address);
-  addFact('Access', `${station.elevators} redundant elevators · level boarding`);
+  addFact('Access', accessSummary(station));
+  addFact('Fare', station.fare_media.join(' · '));
   addFact('Peak headway', `${OPERATIONS.peakHeadwaySeconds} s`);
 
   const actions = document.createElement('div');
@@ -231,6 +232,14 @@ function stationPopup(station, network, onStationAction) {
 
   root.append(heading, role, lineList, facts, actions);
   return root;
+}
+
+function accessSummary(station) {
+  const elevators =
+    station.elevators === 2
+      ? 'Dual redundant elevators'
+      : `${station.elevators} elevators`;
+  return station.level_boarding ? `${elevators} · level boarding` : elevators;
 }
 
 /**

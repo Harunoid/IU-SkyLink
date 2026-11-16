@@ -80,6 +80,7 @@ flowchart LR
 | `is_transfer` | boolean | More than one line stops here |
 | `elevators` | number | Redundant elevator count (2 at every station) |
 | `level_boarding` | boolean | Platform flush with cabin floor |
+| `fare_media` | string[] | Accepted payment: CrimsonCard and open-loop contactless |
 | `coordinate_source` | string | Where the position came from |
 
 **Alignment** (`LineString`)
