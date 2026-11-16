@@ -3,18 +3,23 @@
  * trip planner and the cabin viewer together. The modules never import each
  * other; all cross-talk goes through the callbacks set up here.
  */
+import { loadHostBuildings } from './buildings.js';
 import { createTransitMap } from './map.js';
 import { loadNetwork, peakCapacityPerHour } from './network.js';
 import { createTripPlanner } from './planner.js';
 import { createCabinViewer } from './viewer.js';
+import { startWindStatus } from './weather.js';
 
 const NETWORK_DATA_URL = 'public/data/skylink-data.geojson';
+
 
 /** Opening scenario: the commuter lot to the south end of campus. */
 const DEFAULT_TRIP = { origin: 'stadium', destination: 'ballantine' };
 
 async function start() {
   const status = document.querySelector('[data-app-status]');
+
+  startWindStatus(document.querySelector('[data-wind-status]'));
 
   let network;
   try {
@@ -50,6 +55,11 @@ async function start() {
     status.textContent = 'The map library could not be loaded. Check your connection and refresh.';
     return;
   }
+
+  // Footprints are context, not core data, so they load without blocking.
+  loadHostBuildings(network.stations.values()).then((footprints) => {
+    if (footprints) transitMap.showHostBuildings(footprints);
+  });
 
   planner = createTripPlanner(document.getElementById('trip-planner'), network, {
     onTripChange: (trip) => transitMap.showTrip(trip),

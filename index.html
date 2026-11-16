@@ -45,6 +45,14 @@
         </div>
       </div>
 
+      <p class="wind-status" data-wind-status hidden>
+        <span class="wind-status__dot" aria-hidden="true"></span>
+        <span>
+          <strong data-wind-label></strong>
+          <small data-wind-detail></small>
+        </span>
+      </p>
+
       <dl class="system-stats" aria-label="System at a glance">
         <div class="system-stats__item">
           <dt>Line speed</dt>
@@ -143,6 +151,11 @@
               15-second wait, the ride at 6.0 m/s, 40 seconds for each station passed through
               and 75 seconds for each line change. Walking uses straight-line distance scaled by
               1.3 for real paths at 1.34 m/s.
+            </p>
+            <p>
+              The energy figure is the potential energy of a full peak hour of 80 kg riders over
+              the platform height difference, with 60% recovered on descents and an 85% efficient
+              drive on climbs. Ground levels are surveyed; platform heights are design estimates.
             </p>
           </details>
         </section>
