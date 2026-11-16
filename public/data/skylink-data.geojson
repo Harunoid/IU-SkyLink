@@ -1,0 +1,206 @@
+{
+  "type": "FeatureCollection",
+  "name": "iu-skylink-network-v2",
+  "metadata": {
+    "title": "IU SkyLink v2 network (post user-testing alignment)",
+    "crs": "EPSG:4326",
+    "coordinate_order": "[longitude, latitude]",
+    "updated": "2026-11-16",
+    "notes": "Alignments are straight spans between rooftop stations; all turning happens inside station deflection bays."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "stadium",
+      "geometry": { "type": "Point", "coordinates": [-86.52556, 39.18083] },
+      "properties": {
+        "feature_type": "station",
+        "name": "Memorial Stadium",
+        "short_name": "Stadium",
+        "role": "North Terminal · Commuter Park & Ride",
+        "host_building": "Memorial Stadium",
+        "address": "701 E 17th St, Bloomington, IN 47408",
+        "lines": ["crimson"],
+        "is_transfer": false,
+        "elevators": 2,
+        "level_boarding": true,
+        "coordinate_source": "Wikipedia infobox, Memorial Stadium (Indiana University)"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "wells",
+      "geometry": { "type": "Point", "coordinates": [-86.51665, 39.17115] },
+      "properties": {
+        "feature_type": "station",
+        "name": "Herman B Wells Library",
+        "short_name": "Wells Library",
+        "role": "Academic Core East · Spur Junction",
+        "host_building": "Herman B Wells Library",
+        "address": "1320 E 10th St, Bloomington, IN 47405",
+        "lines": ["crimson", "limestone-spur"],
+        "is_transfer": true,
+        "elevators": 2,
+        "level_boarding": true,
+        "coordinate_source": "Estimated from campus map; pending survey check"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "imu",
+      "geometry": { "type": "Point", "coordinates": [-86.52361, 39.16778] },
+      "properties": {
+        "feature_type": "station",
+        "name": "Indiana Memorial Union",
+        "short_name": "IMU Hub",
+        "role": "Central Transfer Hub",
+        "host_building": "Indiana Memorial Union",
+        "address": "900 E 7th St, Bloomington, IN 47405",
+        "lines": ["crimson", "limestone"],
+        "is_transfer": true,
+        "elevators": 2,
+        "level_boarding": true,
+        "coordinate_source": "Published landmark coordinates (39°10'04\"N 86°31'25\"W)"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ballantine",
+      "geometry": { "type": "Point", "coordinates": [-86.5213, 39.16625] },
+      "properties": {
+        "feature_type": "station",
+        "name": "Ballantine Hall",
+        "short_name": "Ballantine",
+        "role": "Academic Core South",
+        "host_building": "Ballantine Hall",
+        "address": "1020 E Kirkwood Ave, Bloomington, IN 47405",
+        "lines": ["crimson"],
+        "is_transfer": false,
+        "elevators": 2,
+        "level_boarding": true,
+        "coordinate_source": "Estimated from campus map; pending survey check"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "optometry",
+      "geometry": { "type": "Point", "coordinates": [-86.5243, 39.1636] },
+      "properties": {
+        "feature_type": "station",
+        "name": "School of Optometry",
+        "short_name": "Optometry",
+        "role": "South Terminal · Atwater Ave",
+        "host_building": "School of Optometry",
+        "address": "800 E Atwater Ave, Bloomington, IN 47405",
+        "lines": ["crimson"],
+        "is_transfer": false,
+        "elevators": 2,
+        "level_boarding": true,
+        "coordinate_source": "Estimated from campus map; pending survey check"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gisb",
+      "geometry": { "type": "Point", "coordinates": [-86.51735, 39.17006] },
+      "properties": {
+        "feature_type": "station",
+        "name": "Hamilton Lugar School of Global & International Studies",
+        "short_name": "Hamilton Lugar",
+        "role": "East Academic Stop",
+        "host_building": "Global and International Studies Building",
+        "address": "355 N Eagleson Ave, Bloomington, IN 47405",
+        "lines": ["limestone"],
+        "is_transfer": false,
+        "elevators": 2,
+        "level_boarding": true,
+        "coordinate_source": "City of Bloomington master address record"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "eigenmann",
+      "geometry": { "type": "Point", "coordinates": [-86.50846, 39.17083] },
+      "properties": {
+        "feature_type": "station",
+        "name": "Eigenmann Hall",
+        "short_name": "Eigenmann",
+        "role": "East Residential Terminal",
+        "host_building": "Eigenmann Hall",
+        "address": "1900 E 10th St, Bloomington, IN 47406",
+        "lines": ["limestone", "limestone-spur"],
+        "is_transfer": true,
+        "elevators": 2,
+        "level_boarding": true,
+        "coordinate_source": "City of Bloomington master address record"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "crimson",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-86.52556, 39.18083],
+          [-86.51665, 39.17115],
+          [-86.52361, 39.16778],
+          [-86.5213, 39.16625],
+          [-86.5243, 39.1636]
+        ]
+      },
+      "properties": {
+        "feature_type": "alignment",
+        "name": "Crimson Line",
+        "description": "North–South spine",
+        "service": "main",
+        "color": "#990000",
+        "stations": ["stadium", "wells", "imu", "ballantine", "optometry"],
+        "line_speed_mps": 6.0,
+        "peak_headway_s": 30
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "limestone",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-86.52361, 39.16778],
+          [-86.51735, 39.17006],
+          [-86.50846, 39.17083]
+        ]
+      },
+      "properties": {
+        "feature_type": "alignment",
+        "name": "Limestone Line",
+        "description": "East–West relief",
+        "service": "main",
+        "color": "#EEEDEB",
+        "stations": ["imu", "gisb", "eigenmann"],
+        "line_speed_mps": 6.0,
+        "peak_headway_s": 30
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "limestone-spur",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-86.51665, 39.17115],
+          [-86.50846, 39.17083]
+        ]
+      },
+      "properties": {
+        "feature_type": "alignment",
+        "name": "10th Street Relief Spur",
+        "description": "Direct Wells Library ↔ Eigenmann link",
+        "service": "spur",
+        "color": "#EEEDEB",
+        "stations": ["wells", "eigenmann"],
+        "line_speed_mps": 6.0,
+        "peak_headway_s": 30
+      }
+    }
+  ]
+}
