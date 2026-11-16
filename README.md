@@ -8,6 +8,8 @@ The site has three parts:
 - **Trip comparison** – door-to-door time by SkyLink against walking for any station pair, checked against IU's 15-minute passing period.
 - **Cabin viewer** – an orbitable 3D model of the 10-passenger cabin with annotated specifications.
 
+The map also outlines each host building from OpenStreetMap, the trip panel draws an elevation profile with a regenerative-braking estimate, and the header shows a live wind-based operating status.
+
 Built for Design Practice (W200) at IU Bloomington, Fall 2026.
 
 ## The network (v2)
@@ -41,6 +43,12 @@ flowchart LR
   planner --> network
   map -. Leaflet 1.9 .-> cdn1((unpkg))
   viewer -. model-viewer 4 .-> cdn2((Google CDN))
+  app --> buildings[buildings.js<br>host footprints]
+  app --> weather[weather.js<br>wind status]
+  planner --> profile[profile.js<br>elevation profile]
+  buildings --> osm[osm.js<br>Overpass parsing]
+  buildings -. fallback .-> overpass((Overpass API))
+  weather -.-> meteo((Open-Meteo))
   viewer --> glb[(public/models/<br>skylink-cabin.glb)]
 ```
 
@@ -59,8 +67,14 @@ flowchart LR
 │       ├── network.js          Parsing, distances, fastest-route search
 │       ├── map.js              Basemap, lines, stations, cabin simulation
 │       ├── planner.js          Walking vs. SkyLink comparison
+│       ├── profile.js          Elevation profile and energy estimate
+│       ├── buildings.js        Host building footprints (snapshot or live)
+│       ├── osm.js              Overpass query and geometry parsing
+│       ├── weather.js          Live wind operating status
 │       └── viewer.js           model-viewer setup, camera presets, hotspots
-└── tools/build-cabin-model.mjs Regenerates the cabin .glb
+└── tools/
+    ├── build-cabin-model.mjs   Regenerates the cabin .glb
+    └── fetch-campus-data.mjs   Refreshes footprints and elevations
 ```
 
 `map.js`, `planner.js` and `viewer.js` do not import one another. `app.js` passes callbacks between them (for example, a planned trip is handed to the map to highlight), which keeps each module usable on its own.
@@ -82,6 +96,9 @@ flowchart LR
 | `level_boarding` | boolean | Platform flush with cabin floor |
 | `fare_media` | string[] | Accepted payment: CrimsonCard and open-loop contactless |
 | `coordinate_source` | string | Where the position came from |
+| `ground_elevation_m` | number | Ground level above sea level (USGS 3DEP) |
+| `platform_height_m` | number | Rooftop platform height above the ground |
+| `ground_elevation_source`, `platform_height_source` | string | Provenance of the two values above |
 
 **Alignment** (`LineString`)
 
@@ -99,6 +116,20 @@ Alignment vertices coincide with station positions. Spans are straight because a
 ### Coordinate provenance
 
 Four stations are placed from published coordinates: Memorial Stadium, Indiana Memorial Union, Eigenmann Hall and the Global and International Studies Building (the last two from City of Bloomington address records). Wells Library, Ballantine Hall and the School of Optometry are positioned from the campus map and marked as such in `coordinate_source`; confirm them against a survey or GIS layer before using the distances for engineering.
+
+### Open data
+
+| Data | Source | How it gets here |
+| --- | --- | --- |
+| Ground elevation | [USGS 3DEP Elevation Point Query Service](https://apps.nationalmap.gov/epqs/) | Stored per station in the GeoJSON |
+| Host building footprints | [OpenStreetMap](https://www.openstreetmap.org/copyright) via the Overpass API | `public/data/campus-buildings.geojson` if present, otherwise requested live by the browser and cached for the session |
+| Wind speed and gusts | [Open-Meteo](https://open-meteo.com/) | Requested live every 10 minutes |
+
+`npm run fetch:data` refreshes the first two. It writes the footprint snapshot, moves the three estimated stations onto the centroid of their real footprint, re-reads ground elevation at every station, and replaces a platform height with OpenStreetMap's `height` or `building:levels` tag where one is mapped. Run it once and commit the result so the site no longer depends on a live Overpass request.
+
+Platform heights are currently **design estimates** of each roof's height above grade. The energy shown under the elevation profile is the potential energy of a full peak hour of 80 kg riders across the platform height difference, with 60% recovered on a descent and an 85% efficient drive on a climb. It is an order-of-magnitude figure, not a drive-system model.
+
+The wind status uses planning-level gust limits (reduced speed from 15 m/s, hold from 20 m/s); a real installation's limits come from the manufacturer.
 
 ## How trip times are estimated
 
@@ -133,6 +164,12 @@ npm start            # python3 -m http.server 8080
 
 Then visit <http://localhost:8080>. Any static server works; there are no dependencies to install.
 
+To refresh footprints and elevations from open data (Node 18 or newer, needs internet):
+
+```bash
+npm run fetch:data
+```
+
 To regenerate the cabin model after editing the parts list (Node 18 or newer):
 
 ```bash
@@ -145,6 +182,7 @@ The repository root is the site. On GitHub: **Settings → Pages → Build and d
 
 ## Credits
 
+- Building footprints © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL); elevation from the U.S. Geological Survey; weather data by [Open-Meteo](https://open-meteo.com/) (CC BY 4.0)
 - Basemap © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, © [CARTO](https://carto.com/attributions)
 - [Leaflet](https://leafletjs.com/) and [`<model-viewer>`](https://modelviewer.dev/)
 - IU Crimson `#990000` and Cream `#EEEDEB` follow Indiana University's brand palette. This is a student project and is not affiliated with or endorsed by the university.
