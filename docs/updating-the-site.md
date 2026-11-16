@@ -84,6 +84,48 @@ The **Actions** tab on GitHub shows a "pages build and deployment" run for every
 
 GitHub Pages settings live under **Settings → Pages**. They should read "Deploy from a branch", `main`, `/ (root)` and never need touching again.
 
+## Trying a pull request on your Mac before merging
+
+Every pull request lives on a branch. To run one locally, open Terminal in your copy of the repository and fetch that branch. The branch name is shown under the pull request's title on GitHub.
+
+```bash
+cd path/to/IU-SkyLink                 # your local folder
+git status                            # should say "nothing to commit"
+git fetch origin                      # download new branches and commits
+git switch branch-name                # check out the pull request's branch
+npm start                             # preview at http://localhost:8080
+```
+
+`git switch` creates a local copy of the branch the first time and reuses it afterwards. If the branch gets new commits later, `git pull` while you are on it brings them in. Stop the preview with Ctrl+C.
+
+If `git status` lists changed files you want to keep, set them aside with `git stash` before switching and bring them back afterwards with `git stash pop`.
+
+## Keeping your local copy in sync with `main`
+
+After a pull request is merged on GitHub, bring your Mac up to date:
+
+```bash
+git switch main
+git pull origin main                  # main now matches GitHub
+git fetch --prune                     # forget branches deleted on GitHub
+git branch -d branch-name             # optional: delete your local copy of the merged branch
+```
+
+To check that you are in sync at any time:
+
+```bash
+git fetch origin
+git status                            # "Your branch is up to date with 'origin/main'"
+```
+
+If your local `main` has drifted and you only want what is on GitHub, this discards local commits and edits on `main`, so use it deliberately:
+
+```bash
+git switch main
+git fetch origin
+git reset --hard origin/main
+```
+
 ## Commit messages
 
 The history uses [Conventional Commits](https://www.conventionalcommits.org/): a type, an optional area in brackets, and a short description in the imperative.
@@ -106,6 +148,11 @@ Examples: `feat(map): add station photo gallery`, `fix(data): move Optometry pin
 | A line's route or colour | `public/data/skylink-data.geojson` (the `alignment` features) |
 | Speeds, headway, walking pace, transfer and access times | `OPERATIONS` at the top of `src/js/network.js` |
 | What a station popup shows | `stationPopup()` in `src/js/map.js` |
+| A station's survey photos, type and clearance notes | `public/data/stations.json` |
+| The survey panel layout or the schematic section | `src/js/survey.js` |
+| Campus bus assumptions (headway, speed, stops, delay) | `SERVICE` in `tools/build-transit-matrix.mjs`, then `npm run build:transit` |
+| The clearance corridor width | `CORRIDOR_HALF_WIDTH_M` in `src/js/map.js` |
+| Sandbox dragging behaviour | `setEditable()` and `syncNetwork()` in `src/js/map.js` |
 | Map colours, roads, 3D buildings | `src/js/basemap.js` |
 | The trip comparison panel | `src/js/planner.js` |
 | The elevation profile or energy maths | `src/js/profile.js` |
@@ -117,21 +164,31 @@ Examples: `feat(map): add station photo gallery`, `fix(data): move Optometry pin
 
 ### Common jobs
 
-**Move a station.** Change its `coordinates` (longitude first, then latitude) and make the same change wherever that position appears in the alignment features, since each line passes through its stations' exact positions. Right-click a spot in Google Maps to copy its coordinates, then swap the order.
+**Move a station.** Try the position first with **Edit network layout** on the page. To make it permanent, change the station's `coordinates` (longitude first, then latitude) and make the same change wherever that position appears in the alignment features, so the file stays correct for other GIS tools. Then run `npm run build:transit` so the bus times match. Right-click a spot in Google Maps to copy its coordinates, then swap the order.
 
-**Add a station.** Add a `Point` feature with a new `id`, copying an existing station's properties. Add the `id` to the `stations` list of each line that serves it, and add its position to that line's `coordinates` in the same order. The planner, map and menus pick it up from the data.
+**Add a station.** Add a `Point` feature with a new `id`, copying an existing station's properties. Add the `id` to the `stations` list of each line that serves it, and add its position to that line's `coordinates` in the same order. Add an entry for it in `public/data/stations.json` and run `npm run build:transit`. The planner, map and menus pick it up from the data.
 
 **Add a line.** Add a `LineString` feature with `feature_type: "alignment"`, an `id`, a `color`, a `service` of `main` or `spur`, and an ordered `stations` list. Add the new `id` to each of those stations' `lines`. Then add a toggle for it in `index.html` next to the existing three, using the same `data-line` value.
 
 **Replace the cabin model.** Export from Rhino as `.glb` in metres with +Y up, save it over `public/models/skylink-cabin.glb`, and adjust the hotspot `position` values in `src/js/viewer.js` to suit.
 
-**Add images.** Put them in `public/images/` and reference them with a relative path such as `public/images/wells-station.jpg`. Resize photos to about 1600 px wide first; phone originals are far larger than a web page needs.
+**Add station survey photos.** Save each photo in `public/images/stations/`, about 1600 px wide, named after the station id (`stadium-1.jpg`). Then list it under that station in `public/data/stations.json`:
+
+```json
+"photos": [
+  { "url": "images/stations/stadium-1.jpg", "caption": "North Terminal site inspection", "credit": "Harun" }
+]
+```
+
+The station ids are `stadium`, `wells`, `imu`, `ballantine`, `optometry`, `gisb` and `eigenmann`. Several photos per station become a gallery with Previous and Next buttons. File names are case-sensitive on the live site.
+
+**Add other images.** Put them in `public/images/` and reference them with a relative path such as `public/images/wells-station.jpg`. Resize photos to about 1600 px wide first; phone originals are far larger than a web page needs.
 
 **Refresh footprints and elevations.** Run `npm run fetch:data` and commit the changed files in `public/data/`.
 
 ## The map and API keys
 
-The basemap uses [OpenFreeMap](https://openfreemap.org/) tiles drawn with [MapLibre GL JS](https://maplibre.org/). Neither needs an account or an API key, so there is nothing to configure or keep secret.
+The basemap uses [OpenFreeMap](https://openfreemap.org/) tiles drawn with [MapLibre GL JS](https://maplibre.org/), and the distance maths uses [Turf.js](https://turfjs.org/), which runs entirely in the browser. None of them needs an account or an API key, so there is nothing to configure or keep secret.
 
 If you later add a service that does need a key, remember that everything in this repository is public and everything the page loads is visible to visitors. A key committed here is a key published. Either use it in a script you run on your own machine and commit only the results (as `tools/fetch-campus-data.mjs` does for open data), or use a key that the provider lets you restrict to the `harunoid.github.io` domain.
 
