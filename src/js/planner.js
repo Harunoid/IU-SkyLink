@@ -3,6 +3,7 @@
  * comparison. Emits the planned trip so the map can draw it.
  */
 import { OPERATIONS, planTrip } from './network.js';
+import { renderElevationProfile } from './profile.js';
 
 const formatMinutes = (seconds) => {
   const minutes = seconds / 60;
@@ -93,6 +94,9 @@ function renderResults(container, trip, lineById, network) {
     verdict(trip),
     itinerary(trip, lineById, network),
   );
+
+  const profile = renderElevationProfile(trip);
+  if (profile) container.append(profile);
 }
 
 function comparisonRow({ label, seconds, share, modifier, detail }) {
