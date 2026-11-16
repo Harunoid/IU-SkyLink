@@ -4,7 +4,7 @@ An interactive presentation of **IU SkyLink**, a concept for a rooftop-to-roofto
 
 The site has three parts:
 
-- **System map** – both lines, all seven stations, and simulated cabin positions on a Leaflet map.
+- **System map** – both lines, all seven stations, and simulated cabin positions on a tilted 3D map of campus.
 - **Trip comparison** – door-to-door time by SkyLink against walking for any station pair, checked against IU's 15-minute passing period.
 - **Cabin viewer** – an orbitable 3D model of the 10-passenger cabin with annotated specifications.
 
@@ -32,7 +32,8 @@ flowchart LR
   subgraph src/js
     app[app.js<br>entry point and wiring]
     network[network.js<br>data model and routing]
-    map[map.js<br>Leaflet map]
+    map[map.js<br>MapLibre 3D map]
+    basemap[basemap.js<br>map style]
     planner[planner.js<br>trip comparison UI]
     viewer[viewer.js<br>3D cabin dialog]
   end
@@ -41,7 +42,9 @@ flowchart LR
   app --> planner
   app --> viewer
   planner --> network
-  map -. Leaflet 1.9 .-> cdn1((unpkg))
+  map --> basemap
+  map -. MapLibre GL JS 5 .-> cdn1((unpkg))
+  basemap -. vector tiles .-> ofm((OpenFreeMap))
   viewer -. model-viewer 4 .-> cdn2((Google CDN))
   app --> buildings[buildings.js<br>host footprints]
   app --> weather[weather.js<br>wind status]
@@ -65,7 +68,8 @@ flowchart LR
 │   └── js/
 │       ├── app.js              Loads data, connects the modules
 │       ├── network.js          Parsing, distances, fastest-route search
-│       ├── map.js              Basemap, lines, stations, cabin simulation
+│       ├── map.js              3D map, lines, stations, cabin simulation
+│       ├── basemap.js          Dark map style with extruded buildings
 │       ├── planner.js          Walking vs. SkyLink comparison
 │       ├── profile.js          Elevation profile and energy estimate
 │       ├── buildings.js        Host building footprints (snapshot or live)
@@ -152,6 +156,12 @@ The route search is Dijkstra's algorithm over (station, line) pairs, so staying 
 
 To swap in a detailed model, export it as `.glb` with metres as the unit and +Y up, replace the file, then adjust the hotspot `position` values in `src/js/viewer.js` to suit the new geometry.
 
+## The map
+
+The basemap is drawn in the browser by MapLibre GL JS from [OpenFreeMap](https://openfreemap.org/) vector tiles, which need no API key or account. The style is defined in `src/js/basemap.js`: a dark slate rendering with buildings extruded to their mapped height, so the network reads against the real massing of campus. The **3D view** button switches between the tilted view and a flat plan; right-drag (or two-finger drag on a trackpad with Ctrl) rotates and tilts freely.
+
+If the tile service cannot be reached, the lines, stations and planner still work on a plain background.
+
 ## Running locally
 
 ES modules and `fetch` need an HTTP origin, so open the site through a local server rather than from the file system.
@@ -176,6 +186,10 @@ To regenerate the cabin model after editing the parts list (Node 18 or newer):
 npm run build:model
 ```
 
+## Making changes
+
+See [docs/updating-the-site.md](docs/updating-the-site.md) for a step-by-step guide to editing, previewing and publishing, and a table of which file controls what.
+
 ## Deployment
 
 The repository root is the site. On GitHub: **Settings → Pages → Build and deployment → Deploy from a branch**, choose `main` and `/ (root)`. The empty `.nojekyll` file tells Pages to serve the files untouched.
@@ -183,6 +197,6 @@ The repository root is the site. On GitHub: **Settings → Pages → Build and d
 ## Credits
 
 - Building footprints © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL); elevation from the U.S. Geological Survey; weather data by [Open-Meteo](https://open-meteo.com/) (CC BY 4.0)
-- Basemap © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, © [CARTO](https://carto.com/attributions)
-- [Leaflet](https://leafletjs.com/) and [`<model-viewer>`](https://modelviewer.dev/)
+- Basemap tiles by [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org/), data from [OpenStreetMap](https://www.openstreetmap.org/copyright)
+- [MapLibre GL JS](https://maplibre.org/) and [`<model-viewer>`](https://modelviewer.dev/)
 - IU Crimson `#990000` and Cream `#EEEDEB` follow Indiana University's brand palette. This is a student project and is not affiliated with or endorsed by the university.

@@ -12,16 +12,16 @@
 
     <link
       rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css"
+      integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
       crossorigin=""
     />
     <link rel="stylesheet" href="src/css/tokens.css" />
     <link rel="stylesheet" href="src/css/main.css" />
 
     <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"
+      integrity="sha384-nXMl9YiLoSG5KBPTFgvxVuIqQQcqIvo0bFrvoEaGJC6r7IibIzF1S36Zbf/sKBtL"
       crossorigin=""
       defer
     ></script>
@@ -80,7 +80,10 @@
     <main class="hud">
       <section class="hud__map" aria-label="System map">
         <div id="map" class="map" role="application" aria-label="Interactive IU SkyLink map"></div>
-        <p class="map-note">Cabin positions are simulated at 8× speed.</p>
+        <button type="button" class="button button--small map-tilt" data-action="toggle-tilt" aria-pressed="true">
+          3D view
+        </button>
+        <p class="map-note">Cabin positions are simulated at 8× speed. Right-drag to rotate and tilt.</p>
       </section>
 
       <aside class="hud__panels" aria-label="Network controls">

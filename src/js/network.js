@@ -1,6 +1,6 @@
 /**
  * Network model: parses the SkyLink GeoJSON into stations and lines and
- * answers trip questions. No DOM or Leaflet code lives here so the timing
+ * answers trip questions. No DOM or map-library code lives here so the timing
  * model can be reasoned about (and tested) on its own.
  */
 
