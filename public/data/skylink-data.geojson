@@ -25,6 +25,10 @@
         "elevators": 2,
         "level_boarding": true,
         "fare_media": ["CrimsonCard", "contactless tap-to-pay"],
+        "ground_elevation_m": 231.9,
+        "ground_elevation_source": "USGS 3DEP Elevation Point Query Service",
+        "platform_height_m": 28,
+        "platform_height_source": "Design estimate of roof height above grade",
         "coordinate_source": "Wikipedia infobox, Memorial Stadium (Indiana University)"
       }
     },
@@ -44,6 +48,10 @@
         "elevators": 2,
         "level_boarding": true,
         "fare_media": ["CrimsonCard", "contactless tap-to-pay"],
+        "ground_elevation_m": 254.5,
+        "ground_elevation_source": "USGS 3DEP Elevation Point Query Service",
+        "platform_height_m": 30,
+        "platform_height_source": "Design estimate of roof height above grade",
         "coordinate_source": "Estimated from campus map; pending survey check"
       }
     },
@@ -63,6 +71,10 @@
         "elevators": 2,
         "level_boarding": true,
         "fare_media": ["CrimsonCard", "contactless tap-to-pay"],
+        "ground_elevation_m": 233.6,
+        "ground_elevation_source": "USGS 3DEP Elevation Point Query Service",
+        "platform_height_m": 24,
+        "platform_height_source": "Design estimate of roof height above grade",
         "coordinate_source": "Published landmark coordinates (39°10'04\"N 86°31'25\"W)"
       }
     },
@@ -82,6 +94,10 @@
         "elevators": 2,
         "level_boarding": true,
         "fare_media": ["CrimsonCard", "contactless tap-to-pay"],
+        "ground_elevation_m": 240.0,
+        "ground_elevation_source": "USGS 3DEP Elevation Point Query Service",
+        "platform_height_m": 38,
+        "platform_height_source": "Design estimate of roof height above grade",
         "coordinate_source": "Estimated from campus map; pending survey check"
       }
     },
@@ -101,6 +117,10 @@
         "elevators": 2,
         "level_boarding": true,
         "fare_media": ["CrimsonCard", "contactless tap-to-pay"],
+        "ground_elevation_m": 248.1,
+        "ground_elevation_source": "USGS 3DEP Elevation Point Query Service",
+        "platform_height_m": 24,
+        "platform_height_source": "Design estimate of roof height above grade",
         "coordinate_source": "Estimated from campus map; pending survey check"
       }
     },
@@ -120,6 +140,10 @@
         "elevators": 2,
         "level_boarding": true,
         "fare_media": ["CrimsonCard", "contactless tap-to-pay"],
+        "ground_elevation_m": 249.5,
+        "ground_elevation_source": "USGS 3DEP Elevation Point Query Service",
+        "platform_height_m": 20,
+        "platform_height_source": "Design estimate of roof height above grade",
         "coordinate_source": "City of Bloomington master address record"
       }
     },
@@ -139,6 +163,10 @@
         "elevators": 2,
         "level_boarding": true,
         "fare_media": ["CrimsonCard", "contactless tap-to-pay"],
+        "ground_elevation_m": 250.9,
+        "ground_elevation_source": "USGS 3DEP Elevation Point Query Service",
+        "platform_height_m": 46,
+        "platform_height_source": "Design estimate of roof height above grade",
         "coordinate_source": "City of Bloomington master address record"
       }
     },
